@@ -448,6 +448,27 @@ final class PIVSecurityProvider {
       next = (byte) ((byte) (next + (byte) 1) % historyCount);
       persistentState[STATE_HISTORY_NEXT] = next;
     }
+
+    // VotingWorks modification: Clear all PIN-gated keys
+    PIVObject key = firstKey;
+    while (key != null) {
+      byte mode;
+      if (transientState[STATE_IS_CONTACTLESS] == FLAG_TRUE) {
+        mode = key.getModeContactless();
+      } else {
+        mode = key.getModeContact();
+      }
+      boolean isPINGated = (
+        mode != PIVObject.ACCESS_MODE_ALWAYS && (
+          (mode & PIVObject.ACCESS_MODE_PIN) == PIVObject.ACCESS_MODE_PIN ||
+          (mode & PIVObject.ACCESS_MODE_PIN_ALWAYS) == PIVObject.ACCESS_MODE_PIN_ALWAYS
+        )
+      );
+      if (isPINGated) {
+        key.clear();
+      }
+      key = key.nextObject;
+    }
   }
 
   /**
