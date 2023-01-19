@@ -313,6 +313,11 @@ final class PIVSecurityProvider {
       result = true;
     }
 
+    // VotingWorks addition: Allow writing objects when access mode is ALWAYS
+    if (mode == PIVObject.ACCESS_MODE_ALWAYS) {
+      result = true;
+    }
+
     // Now that we have performed a security check, clear the pinAlways flag
     // NOTE: This incidentally always runs with access condition 3 above.
     setPINAlways(false);
