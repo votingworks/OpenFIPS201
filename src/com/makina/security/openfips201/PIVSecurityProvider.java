@@ -313,6 +313,11 @@ final class PIVSecurityProvider {
       result = true;
     }
 
+    // VotingWorks addition: Allow writing objects when access mode is ALWAYS
+    if (mode == PIVObject.ACCESS_MODE_ALWAYS) {
+      result = true;
+    }
+
     // Now that we have performed a security check, clear the pinAlways flag
     // NOTE: This incidentally always runs with access condition 3 above.
     setPINAlways(false);
@@ -442,6 +447,27 @@ final class PIVSecurityProvider {
       pinHistory[next].update(buffer, offset, length);
       next = (byte) ((byte) (next + (byte) 1) % historyCount);
       persistentState[STATE_HISTORY_NEXT] = next;
+    }
+
+    // VotingWorks modification: Clear all PIN-gated keys
+    PIVObject key = firstKey;
+    while (key != null) {
+      byte mode;
+      if (transientState[STATE_IS_CONTACTLESS] == FLAG_TRUE) {
+        mode = key.getModeContactless();
+      } else {
+        mode = key.getModeContact();
+      }
+      boolean isPINGated = (
+        mode != PIVObject.ACCESS_MODE_ALWAYS && (
+          (mode & PIVObject.ACCESS_MODE_PIN) == PIVObject.ACCESS_MODE_PIN ||
+          (mode & PIVObject.ACCESS_MODE_PIN_ALWAYS) == PIVObject.ACCESS_MODE_PIN_ALWAYS
+        )
+      );
+      if (isPINGated) {
+        key.clear();
+      }
+      key = key.nextObject;
     }
   }
 
