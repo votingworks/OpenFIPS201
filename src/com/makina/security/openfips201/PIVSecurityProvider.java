@@ -437,18 +437,6 @@ final class PIVSecurityProvider {
       return; // Keep compiler happy
     }
 
-    // Update the PIN
-    pin.update(buffer, offset, length);
-
-    // Update the PIN History if enabled
-    if (historyCount > 0) {
-      // Move/Roll to the next position we will write to
-      byte next = persistentState[STATE_HISTORY_NEXT];
-      pinHistory[next].update(buffer, offset, length);
-      next = (byte) ((byte) (next + (byte) 1) % historyCount);
-      persistentState[STATE_HISTORY_NEXT] = next;
-    }
-
     // VotingWorks modification: Clear all PIN-gated keys
     PIVObject key = firstKey;
     while (key != null) {
@@ -469,7 +457,19 @@ final class PIVSecurityProvider {
       }
       key = key.nextObject;
     }
-  }
+
+    // Update the PIN
+    pin.update(buffer, offset, length);
+
+    // Update the PIN History if enabled
+    if (historyCount > 0) {
+      // Move/Roll to the next position we will write to
+      byte next = persistentState[STATE_HISTORY_NEXT];
+      pinHistory[next].update(buffer, offset, length);
+      next = (byte) ((byte) (next + (byte) 1) % historyCount);
+      persistentState[STATE_HISTORY_NEXT] = next;
+    }
+}
 
   /**
    * Performs a comprehensive erase of the target buffer
